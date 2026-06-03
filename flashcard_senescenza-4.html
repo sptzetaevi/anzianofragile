@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flashcard - Senescenza e anziano fragile</title>
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --card: #ffffff;
+      --text: #1f2933;
+      --muted: #5f6b7a;
+      --accent: #2f6f73;
+      --accent-light: #dceff0;
+      --border: #d6dde5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    header {
+      padding: 28px 18px 16px;
+      text-align: center;
+      background: var(--accent);
+      color: white;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 4vw, 2.5rem);
+    }
+
+    header p {
+      margin: 0;
+      font-size: 1.05rem;
+      opacity: 0.95;
+    }
+
+    .controls {
+      max-width: 1000px;
+      margin: 18px auto 0;
+      padding: 0 16px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      background: var(--accent);
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: white;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+
+    .intro {
+      max-width: 900px;
+      margin: 18px auto;
+      padding: 0 18px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .grid {
+      max-width: 1200px;
+      margin: 20px auto 50px;
+      padding: 0 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+    }
+
+    .flashcard {
+      perspective: 1000px;
+      min-height: 245px;
+    }
+
+    .inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 245px;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+      cursor: pointer;
+    }
+
+    .flashcard.flipped .inner {
+      transform: rotateY(180deg);
+    }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      padding: 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .front {
+      border-top: 8px solid var(--accent);
+    }
+
+    .back {
+      transform: rotateY(180deg);
+      background: var(--accent-light);
+      border-top: 8px solid var(--accent);
+    }
+
+    .label {
+      display: inline-block;
+      align-self: flex-start;
+      background: var(--accent-light);
+      color: var(--accent);
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 0.82rem;
+      margin-bottom: 12px;
+    }
+
+    .back .label {
+      background: white;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      margin: 0 0 12px;
+    }
+
+    p, ul {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    ul {
+      padding-left: 18px;
+    }
+
+    .hint {
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    strong { color: #123a3d; }
+
+    @media (max-width: 520px) {
+      .flashcard, .inner { min-height: 280px; }
+      .face { padding: 18px; }
+    }
+
+    @media print {
+      body { background: white; }
+      header, .controls, .intro, .hint { display: none; }
+      .grid { display: block; margin: 0; padding: 0; }
+      .flashcard { min-height: auto; break-inside: avoid; margin-bottom: 18px; }
+      .inner { transform: none !important; min-height: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .face { position: static; transform: none !important; min-height: 190px; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Flashcard: senescenza e anziano fragile</h1>
+    <p>Ripasso guidato livello B - socio-sanitario</p>
+  </header>
+
+  <div class="controls">
+    <button onclick="flipAll(true)">Mostra tutte le risposte</button>
+    <button class="secondary" onclick="flipAll(false)">Mostra tutte le domande</button>
+  </div>
+
+  <p class="intro">Clicca su una carta per girarla. Davanti trovi la domanda, dietro una risposta semplice ma esplicita.</p>
+
+  <main class="grid" id="cards"></main>
+
+  <script>
+    const flashcards = [
+      {
+        tema: "Senescenza",
+        domanda: "Che cos'è la senescenza?",
+        risposta: "La senescenza è il normale processo di <strong>invecchiamento</strong> della persona. È naturale, progressiva e irreversibile. Con il tempo il corpo perde parte della sua efficienza e diventa più vulnerabile alle malattie."
+      },
+      {
+        tema: "Invecchiamento",
+        domanda: "Invecchiare significa sempre essere malati?",
+        risposta: "No. Invecchiare non significa per forza essere malati. Però, con l'età, gli organi e gli apparati funzionano con minore efficienza e aumenta il rischio di sviluppare malattie."
+      },
+      {
+        tema: "Cause",
+        domanda: "Da cosa dipende l'invecchiamento?",
+        risposta: "L'invecchiamento dipende da più fattori insieme: <strong>genetica</strong>, ambiente, stile di vita, alimentazione, attività fisica, esposizione a sostanze dannose e capacità dell'organismo di riparare i danni cellulari."
+      },
+      {
+        tema: "Genetica",
+        domanda: "Che cosa dice la teoria genetica dell'invecchiamento?",
+        risposta: "Secondo questa teoria ogni persona possiede una specie di <strong>orologio biologico</strong>. Le cellule possono dividersi solo un certo numero di volte; poi diventano meno efficienti e vanno incontro a senescenza."
+      },
+      {
+        tema: "Radicali liberi",
+        domanda: "Che cosa sono i radicali liberi?",
+        risposta: "I radicali liberi sono sostanze prodotte anche durante le normali attività del corpo. Possono danneggiare cellule e DNA. Quando i danni si accumulano, favoriscono l'invecchiamento dei tessuti."
+      },
+      {
+        tema: "Antiossidanti",
+        domanda: "Perché frutta e verdura sono importanti?",
+        risposta: "Frutta e verdura contengono sostanze <strong>antiossidanti</strong>, che aiutano a contrastare l'azione dei radicali liberi. Per questo una corretta alimentazione può aiutare a proteggere le cellule."
+      },
+      {
+        tema: "Sistema immunitario",
+        domanda: "Come cambia il sistema immunitario nell'anziano?",
+        risposta: "Con l'età il sistema immunitario diventa meno efficace. L'anziano può ammalarsi più facilmente, guarire più lentamente e avere infezioni più gravi. Per questo sono importanti prevenzione e vaccinazioni."
+      },
+      {
+        tema: "Pelle",
+        domanda: "Come cambia la pelle con l'invecchiamento?",
+        risposta: "La pelle diventa più sottile, secca e meno elastica. Compaiono rughe e macchie senili. Questo avviene anche perché diminuisce la produzione di collagene."
+      },
+      {
+        tema: "Ossa",
+        domanda: "Che cos'è l'osteoporosi?",
+        risposta: "L'osteoporosi è una condizione in cui le ossa perdono calcio e minerali. Diventano più fragili e aumenta il rischio di fratture, soprattutto in caso di caduta."
+      },
+      {
+        tema: "Muscoli",
+        domanda: "Perché nell'anziano aumenta il rischio di cadute?",
+        risposta: "Con l'età i muscoli perdono massa e forza. Anche equilibrio e riflessi possono diminuire. Per questo l'anziano può camminare con più difficoltà ed essere più esposto alle cadute."
+      },
+      {
+        tema: "Cuore",
+        domanda: "Come cambia l'apparato cardiovascolare?",
+        risposta: "Le arterie diventano più rigide e meno elastiche. Il cuore deve lavorare di più e può aumentare la pressione arteriosa. Cresce anche il rischio di aterosclerosi, infarto e ictus."
+      },
+      {
+        tema: "Aterosclerosi",
+        domanda: "Che cos'è l'aterosclerosi?",
+        risposta: "L'aterosclerosi è l'accumulo di grassi e colesterolo nelle pareti delle arterie. Questi depositi restringono il passaggio del sangue e possono causare problemi al cuore o al cervello."
+      },
+      {
+        tema: "Polmoni",
+        domanda: "Come cambia l'apparato respiratorio?",
+        risposta: "I polmoni diventano meno elastici e riescono a scambiare meno ossigeno. Per questo l'anziano può avere fiato corto, stancarsi prima ed essere più vulnerabile alle infezioni respiratorie."
+      },
+      {
+        tema: "Sistema nervoso",
+        domanda: "Quali cambiamenti possono comparire nel sistema nervoso?",
+        risposta: "Possono comparire rallentamento dei riflessi, minore velocità nel ragionamento, difficoltà di memoria e concentrazione. Questi cambiamenti non indicano sempre una malattia."
+      },
+      {
+        tema: "Angina",
+        domanda: "Che cos'è l'angina pectoris?",
+        risposta: "L'angina pectoris è un dolore al petto causato da un temporaneo ridotto apporto di sangue e ossigeno al cuore. Spesso compare durante uno sforzo o una forte emozione."
+      },
+      {
+        tema: "Infarto",
+        domanda: "Che cos'è l'infarto miocardico?",
+        risposta: "L'infarto avviene quando una coronaria si chiude completamente. Una parte del muscolo cardiaco non riceve più sangue e ossigeno e inizia a morire. È un'emergenza medica."
+      },
+      {
+        tema: "Infarto",
+        domanda: "Quali sono i sintomi principali dell'infarto?",
+        risposta: "I sintomi possono essere: forte dolore al petto, dolore al braccio sinistro o alla mandibola, sudorazione intensa, nausea, difficoltà respiratoria, paura e agitazione."
+      },
+      {
+        tema: "Ictus",
+        domanda: "Che cos'è l'ictus?",
+        risposta: "L'ictus è un danno al cervello causato da un problema nella circolazione del sangue. Può essere ischemico, quando un vaso si chiude, oppure emorragico, quando un vaso si rompe."
+      },
+      {
+        tema: "Ictus",
+        domanda: "Quali sono i segnali di un ictus?",
+        risposta: "I segnali possono comparire all'improvviso: difficoltà a parlare, paralisi di un braccio o di una gamba, bocca storta, problemi di vista, perdita di sensibilità o perdita di coscienza. Bisogna chiamare subito il <strong>118</strong>."
+      },
+      {
+        tema: "Polmonite",
+        domanda: "Che cos'è la polmonite?",
+        risposta: "La polmonite è un'infezione dei polmoni. Gli alveoli, che normalmente contengono aria, si riempiono di liquido o pus. La respirazione diventa più difficile."
+      },
+      {
+        tema: "Polmonite",
+        domanda: "Perché la polmonite è pericolosa negli anziani?",
+        risposta: "Negli anziani la polmonite può essere più grave perché il sistema immunitario è meno efficiente e i sintomi possono essere meno evidenti. La diagnosi può quindi arrivare più tardi."
+      },
+      {
+        tema: "BPCO",
+        domanda: "Che cos'è la BPCO?",
+        risposta: "La BPCO, cioè broncopneumopatia cronica ostruttiva, è una malattia respiratoria cronica che rende difficile il passaggio dell'aria nei polmoni. Tende a peggiorare nel tempo."
+      },
+      {
+        tema: "BPCO",
+        domanda: "Qual è la causa principale della BPCO?",
+        risposta: "La causa principale è il <strong>fumo di sigaretta</strong>. Anche polveri, sostanze irritanti e inquinamento possono favorire la malattia."
+      },
+      {
+        tema: "Enfisema",
+        domanda: "Che cos'è l'enfisema polmonare?",
+        risposta: "L'enfisema è una malattia in cui gli alveoli polmonari si danneggiano e perdono elasticità. L'ossigeno passa con maggiore difficoltà nel sangue e la persona ha affanno."
+      },
+      {
+        tema: "Tumore polmonare",
+        domanda: "Qual è il principale fattore di rischio del tumore polmonare?",
+        risposta: "Il principale fattore di rischio è il <strong>fumo di sigaretta</strong>. Altri fattori sono amianto, inquinamento e sostanze irritanti respirate per molto tempo."
+      },
+      {
+        tema: "Tumore polmonare",
+        domanda: "Quali sintomi può dare il tumore polmonare?",
+        risposta: "Può dare tosse persistente, sangue nell'espettorato, dolore toracico, perdita di peso, stanchezza e infezioni respiratorie ricorrenti. Spesso i sintomi compaiono tardi."
+      },
+      {
+        tema: "Edentulia",
+        domanda: "Che cos'è l'edentulia?",
+        risposta: "L'edentulia è la perdita parziale o totale dei denti. Può causare difficoltà a masticare, parlare e alimentarsi correttamente. Per questo possono essere utili le protesi dentarie."
+      },
+      {
+        tema: "Parodontite",
+        domanda: "Che cos'è la piorrea o parodontite?",
+        risposta: "È una malattia che colpisce gengive e tessuti che sostengono il dente. Può causare sanguinamento, mobilità dentale e, se non curata, perdita dei denti."
+      },
+      {
+        tema: "Anziano fragile",
+        domanda: "Chi è l'anziano fragile?",
+        risposta: "L'anziano fragile è una persona che ha una ridotta capacità di reagire a malattie, cadute, infezioni o ricoveri. Anche un evento semplice può avere conseguenze importanti sulla sua autonomia."
+      },
+      {
+        tema: "Prevenzione",
+        domanda: "Che cosa aiuta l'anziano a mantenere una buona qualità di vita?",
+        risposta: "Sono importanti: attività fisica regolare, alimentazione equilibrata, relazioni sociali, controlli medici, vaccinazioni, igiene personale e orale, assunzione corretta delle terapie e abolizione del fumo."
+      }
+    ];
+
+    const container = document.getElementById('cards');
+
+    flashcards.forEach((card, index) => {
+      const el = document.createElement('section');
+      el.className = 'flashcard';
+      el.innerHTML = `
+        <div class="inner" tabindex="0" role="button" aria-label="Flashcard ${index + 1}: clicca per girare">
+          <div class="face front">
+            <div>
+              <span class="label">${card.tema}</span>
+              <h2>${card.domanda}</h2>
+            </div>
+            <p class="hint">Clicca per vedere la risposta</p>
+          </div>
+          <div class="face back">
+            <div>
+              <span class="label">Risposta</span>
+              <p>${card.risposta}</p>
+            </div>
+            <p class="hint">Clicca per tornare alla domanda</p>
+          </div>
+        </div>
+      `;
+      el.addEventListener('click', () => el.classList.toggle('flipped'));
+      el.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          el.classList.toggle('flipped');
+        }
+      });
+      container.appendChild(el);
+    });
+
+    function flipAll(showAnswers) {
+      document.querySelectorAll('.flashcard').forEach(card => {
+        card.classList.toggle('flipped', showAnswers);
+      });
+    }
+  </script>
+</body>
+</html>
